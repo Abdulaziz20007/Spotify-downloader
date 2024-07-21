@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify-Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            background-color: #1DB954;
+        }
+
+        #track-input {
+            width: 300px;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 20px;
+            margin-right: 1rem;
+        }
+
+        #search-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 20px;
+            background-color: #FFFFFF;
+            color: #1DB954;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #track-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .track {
+            background-color: #282828;
+            border-radius: 10px;
+            margin: 1rem;
+            padding: 1rem;
+            width: 200px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .track:hover {
+            transform: scale(1.05);
+        }
+
+        .track img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .track h3 {
+            margin: 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        .track a {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background-color: #1DB954;
+            color: #FFFFFF;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .track a:hover {
+            background-color: #1aa34a;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <input type="text" id="track-input" placeholder="Type track name">
+        <button id="search-button">Search</button>
+    </nav>
+    <div id="track-list"></div>
+
+    <script>
+        const searchButton = document.getElementById('search-button');
+        const trackInput = document.getElementById('track-input');
+        const trackList = document.getElementById('track-list');
+
+        searchButton.addEventListener('click', searchTracks);
+
+        async function searchTracks() {
+            const query = trackInput.value;
+            const surl = `https://spotify23.p.rapidapi.com/search/?q=${query}&type=tracks&offset=0&limit=5&numberOfTopResults=5`;
+            const soptions = {
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-key': '542b77cab2msh03a80cd13a2fbc2p152e05jsn62dbeae40dd5',
+                    'x-rapidapi-host': 'spotify23.p.rapidapi.com'
+                }
+            };
+
+            try {
+                const response = await fetch(surl, soptions);
+                const data = await response.json();
+                const tracks = data.tracks.items.map(item => item.data);
+                displayTracks(tracks);
+            } catch (error) {
+                console.error('Error fetching tracks:', error);
+            }
+        }
+
+        function displayTracks(tracks) {
+            trackList.innerHTML = '';
+            tracks.forEach(track => {
+                const trackElement = document.createElement('div');
+                trackElement.classList.add('track');
+
+                const trackCover = document.createElement('img');
+                trackCover.src = track.albumOfTrack.coverArt.sources[0].url;
+                trackCover.alt = track.name;
+
+                const trackName = document.createElement('h3');
+                trackName.textContent = track.name;
+
+                const trackAudio = document.createElement('a');
+                trackAudio.textContent = 'Download';
+                trackAudio.target = '_blank';
+
+                fetchDownloadLink(track.id)
+                    .then(downloadLink => {
+                        trackAudio.href = downloadLink;
+                    })
+                    .catch(error => console.error('Error fetching download link:', error));
+
+                trackElement.appendChild(trackCover);
+                trackElement.appendChild(trackName);
+                trackElement.appendChild(trackAudio);
+                trackList.appendChild(trackElement);
+            });
+        }
+
+        async function fetchDownloadLink(trackId) {
+            const durl = `https://spotify-downloader9.p.rapidapi.com/downloadSong?songId=${trackId}`;
+            const doptions = {
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-key': '542b77cab2msh03a80cd13a2fbc2p152e05jsn62dbeae40dd5',
+                    'x-rapidapi-host': 'spotify-downloader9.p.rapidapi.com'
+                }
+            };
+
+            try {
+                const response = await fetch(durl, doptions);
+                const data = await response.json();
+                return data.data.downloadLink;
+            } catch (error) {
+                console.error('Error fetching download link:', error);
+            }
+        }
+    </script>
+</body>
+</html>
